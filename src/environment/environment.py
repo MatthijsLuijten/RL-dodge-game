@@ -1,9 +1,21 @@
 import pygame
 import numpy as np
+from pygame.surface import Surface
+from typing import Tuple
 
 
 class Environment:
-    def __init__(self, screen, agent_size=10, render_on=False):
+    def __init__(
+        self, screen: Surface, agent_size: int = 10, render_on: bool = False
+    ) -> None:
+        """
+        Initializes the environment.
+
+        Args:
+            screen (Surface): Pygame screen surface.
+            agent_size (int, optional): Size of the agent. Defaults to 10.
+            render_on (bool, optional): Whether to render the environment. Defaults to False.
+        """
         self.screen = screen
         self.render_on = render_on
         self.agent_size = agent_size
@@ -26,20 +38,29 @@ class Environment:
             "right": 3,
         }
 
-    def reset(self):
+    def reset(self) -> np.ndarray:
+        """
+        Resets the environment.
+
+        Returns:
+            np.ndarray: Initial state of the environment.
+        """
         self.agent_location = (
             (self.screen.get_size()[0] / 2),
             (self.screen.get_size()[1] / 2),
         )
 
-        # TODO: reset enemies; self.enemy_generator.reset()
+        # TODO: reset enemies; self.enemy_generator.reset()? Dunno if needed
 
         if self.render_on:
             self.render()
 
         return self.get_state()
 
-    def render(self):
+    def render(self) -> None:
+        """
+        Renders the environment.
+        """
         self.screen.fill((0, 0, 0))
         pygame.draw.circle(
             self.screen, (255, 255, 255), self.agent_location, self.agent_size
@@ -47,16 +68,31 @@ class Environment:
         # TODO: draw enemeis; self.enemies.render()?
         pygame.display.flip()
 
-    def get_state(self):
+    def get_state(self) -> np.ndarray:
+        """
+        Gets the current state of the environment.
+
+        Returns:
+            np.ndarray: Current state of the environment.
+        """
         # TODO: Add the closest enemy state here
         # Something like enemy_location = self.enemies.get_closest_enemy(self.agent_location, ...)
-        state = np.array([self.agent_location])
+        state = np.array([self.agent_location[0], self.agent_location[1]])
 
         # TODO: if enemy state is added:
-        # state = np.array([self.agent_location, enemy_distance])
+        # state = np.array([self.agent_location[0], self.agent_location[1], enemy_location[0], enemy_location[1]])
         return state
 
-    def move_agent(self, action):
+    def move_agent(self, action: int) -> Tuple[int, bool]:
+        """
+        Moves the agent based on the action taken.
+
+        Args:
+            action (int): Action to be taken.
+
+        Returns:
+            Tuple[int, bool]: Reward obtained and whether the episode is done.
+        """
         moves = {
             self.actions["up"]: (0, -1),
             self.actions["down"]: (0, 1),
@@ -83,7 +119,16 @@ class Environment:
 
         return reward, done
 
-    def is_valid_location(self, new_location):
+    def is_valid_location(self, new_location: Tuple[int, int]) -> bool:
+        """
+        Checks if the new location is valid.
+
+        Args:
+            new_location (Tuple[int, int]): New location to be checked.
+
+        Returns:
+            bool: True if the location is valid, False otherwise.
+        """
         screen_width, screen_height = self.screen.get_size()
         agent_radius = self.agent_size / 2
 
@@ -97,8 +142,16 @@ class Environment:
         else:
             return False
 
-    def step(self, action):
-        # Apply the action to the environment, record the observations
+    def step(self, action: int) -> Tuple[int, np.ndarray, bool]:
+        """
+        Apply the action to the environment, record the observations.
+
+        Args:
+            action (int): Action to be taken.
+
+        Returns:
+            Tuple[int, np.ndarray, bool]: Reward obtained, next state, and whether the episode is done.
+        """
         reward, done = self.move_agent(action)
         print("reward", reward)
         next_state = self.get_state()
