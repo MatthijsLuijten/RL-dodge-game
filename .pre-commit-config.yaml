@@ -1,0 +1,20 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.4.0
+    hooks:
+      - id: check-added-large-files # Check if no files larger than 0.5 GB are committed
+      - id: check-merge-conflict # Check if there is no merge conflict with master
+      - id: check-ast # Check if the file parses as valid python
+      - id: trailing-whitespace # Trim trailing whitespaces
+      - id: end-of-file-fixer # Ensure file ends with exactly one whiteline
+
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black # Ensure uniform python code formatting
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.2.0
+    hooks:
+      - id: mypy # Check correct python code (incl. imports, types etc.)
+        files: src
