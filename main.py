@@ -1,7 +1,7 @@
 import sys
 import pygame
 
-from src.environment.environment import Environment
+from src.environment import Environment
 
 pygame.init()
 screen_size = (800, 600)
@@ -29,12 +29,6 @@ for episode in range(episodes):
             # get agent action; action = agent.get_action(state)
             # reward, next_state, done = env.step(action)
 
-            # if event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN:
-            #     prev_location = env.agent_location
-            #     env.agent_location = (
-            #         prev_location[0] + 0,
-            #         prev_location[1] + 1,
-            #     )
         clock.tick(60)  # Limit frame rate to 60 FPS
 
 pygame.quit()

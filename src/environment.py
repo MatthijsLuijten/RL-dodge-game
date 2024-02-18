@@ -38,6 +38,8 @@ class Environment:
             "right": 3,
         }
 
+        self.reset()
+
     def reset(self) -> np.ndarray:
         """
         Resets the environment.
@@ -70,7 +72,8 @@ class Environment:
 
     def get_state(self) -> np.ndarray:
         """
-        Gets the current state of the environment.
+        Gets the current state of the environment. This state is a list of coordinates, first the agents coordinates followed by the enemy
+        coordinates, e.g. [400, 300, 10, 10].
 
         Returns:
             np.ndarray: Current state of the environment.
@@ -108,7 +111,7 @@ class Environment:
         done = False
         reward = self.rewards["alive"]
 
-        if self.is_valid_location(new_location):
+        if not self.is_valid_location(new_location):
             reward = self.rewards["not possible"]
             done = True
 
