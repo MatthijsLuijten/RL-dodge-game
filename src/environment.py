@@ -105,7 +105,7 @@ class Environment:
 
         previous_location = self.agent_location
 
-        move = moves.get(action)
+        move = moves.get(action, (0, 0))
         new_location = (previous_location[0] + move[0], previous_location[1] + move[1])
 
         done = False
