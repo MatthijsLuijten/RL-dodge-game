@@ -20,7 +20,7 @@ pre-commit install
 Set up a conda environment with the requirements of this project:
 
 ```
-conda create --name <environment_name> --file requirements.txt
+conda create --name <environment_name> --file requirements.txt python=3.10
 ```
 
 ## 👩‍💻 Installation
