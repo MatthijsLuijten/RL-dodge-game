@@ -27,7 +27,7 @@ for episode in range(episodes):
 
             # TODO:
             # get agent action; action = agent.get_action(state)
-            reward, next_state, done = env.step(1)
+            # reward, next_state, done = env.step(action)
 
         clock.tick(60)  # Limit frame rate to 60 FPS
 
