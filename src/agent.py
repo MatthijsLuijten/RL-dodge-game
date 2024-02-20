@@ -34,7 +34,7 @@ class Agent:
         return pygame.draw.circle(screen, self.color, self.location, self.size)
 
     def move(self, move: Tuple[int, int]) -> None:
-        """Move the agent by a specified amount.
+        """Move the agent given a direction
 
         Args:
             move (Tuple[int, int]): The amount to move the agent in (x, y) direction.

@@ -28,19 +28,3 @@ class Player(Agent):
     def reset(self):
         """Reset the player to its initial state."""
         self.location = self.start_location
-
-    def render(self, screen: pygame.Surface) -> None:
-        """Render the player on the screen.
-
-        Args:
-            screen (pygame.Surface): The surface to render the player on.
-        """
-        return super().render(screen)
-
-    def move(self, move: Tuple[int, int]):
-        """Move the player based on the given move.
-
-        Args:
-            move (Tuple[int, int]): Move to perform.
-        """
-        super().move(move)
