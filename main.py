@@ -12,7 +12,10 @@ clock = pygame.time.Clock()
 env = Environment(screen=screen, render_on=True)
 
 episodes = 5000
+spawn_interval = 0.5  # seconds
+
 for episode in range(episodes):
+    spawn_timer = 0
     state = env.reset()
     done = False
 
@@ -25,9 +28,17 @@ for episode in range(episodes):
                 pygame.quit()
                 sys.exit()
 
-            # TODO:
-            # get agent action; action = agent.get_action(state)
-            # reward, next_state, done = env.step(action)
+        # Update spawn timer
+        spawn_timer += clock.get_time() / 1000
+
+        # Check if it's time to spawn an enemy
+        if spawn_timer >= spawn_interval:
+            env.spawn_enemy()
+            spawn_timer = 0
+
+        # TODO:
+        # get agent action; action = env.player.get_action(state)
+        reward, next_state, done = env.step(0)
 
         clock.tick(60)  # Limit frame rate to 60 FPS
 
