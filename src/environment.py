@@ -2,7 +2,7 @@ import pygame
 import random
 import numpy as np
 from pygame.surface import Surface
-from typing import Tuple
+from typing import Tuple, List
 
 from src.enemy import Enemy
 from src.player import Player
@@ -70,18 +70,39 @@ class Environment:
 
     def get_state(self) -> np.ndarray:
         """
-        Gets the current state of the environment. This state is a list of coordinates, first the players coordinates followed by the enemy
+        Gets the current state of the environment. This state is a list of coordinates, first the player's coordinates followed by the enemy
         coordinates, e.g. [400, 300, 10, 10].
 
         Returns:
             np.ndarray: Current state of the environment.
         """
-        # TODO: Add the closest enemy state here
-        # Something like enemy_location = self.enemies.get_closest_enemy(self.player_location, ...)
-        state = np.array([self.player.location[0], self.player.location[1]])
+        # Initialize a list to store distances between player and enemies
+        distances = []
 
-        # TODO: if enemy state is added:
-        # state = np.array([self.player_location[0], self.player_location[1], enemy_location[0], enemy_location[1]])
+        # Calculate distances between player and enemies
+        for enemy in self.enemies:
+            enemy_pos = np.array(enemy.location)
+            player_pos = np.array(self.player.location)
+            distance = np.linalg.norm(enemy_pos - player_pos)  # Euclidean distance
+            distances.append((enemy, distance))
+
+        # Sort the enemies based on their distances from the player
+        sorted_enemies = sorted(distances, key=lambda x: x[1])
+
+        # Take the locations of the closest enemies, up to 10 or all if less than 10
+        closest_enemy_locations: List[int] = []
+        for enemy, _ in sorted_enemies[:10]:
+            closest_enemy_locations.extend(enemy.location)
+
+        # Fill remaining slots with -1 if there are fewer than 10 enemies
+        num_missing_enemies = 10 - len(sorted_enemies)
+        closest_enemy_locations += [-1] * (2 * num_missing_enemies)
+
+        # Combine player location with locations of the closest enemies
+        state = np.array(
+            [self.player.location[0], self.player.location[1]] + closest_enemy_locations
+        )
+
         return state
 
     def move_player(self, action: int) -> Tuple[int, bool]:
@@ -103,12 +124,15 @@ class Environment:
         if not self.is_valid_location(self.player.location):
             reward = self.rewards["not possible"]
             done = True
+            print("not possible")
+            return reward, done
 
         # Check if the player collides with an enemy
         for enemy in self.enemies:
             if self.check_collision(self.player, enemy):
                 reward = self.rewards["death"]
                 done = True
+                print("death")
                 return reward, done
 
         return reward, done
@@ -169,7 +193,7 @@ class Environment:
             Tuple[int, np.ndarray, bool]: Reward obtained, next state, and whether the episode is done.
         """
         reward, done = self.move_player(action)
-        print("reward", reward)
+        # print("reward", reward)
         next_state = self.get_state()
 
         for enemy in self.enemies:
