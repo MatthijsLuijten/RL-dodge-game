@@ -29,7 +29,7 @@ class TestPlayer(unittest.TestCase):
         self.assertEqual(self.player.location, (100, 100))
 
     def test_move(self):
-        """Test if moving a player updates the locationi correctly"""
+        """Test if moving a player updates the location correctly"""
         self.player.move(self.player.actions[3])  # Move right
         self.assertEqual(self.player.location, (101, 100))
 
