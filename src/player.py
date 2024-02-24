@@ -1,11 +1,12 @@
 import pygame
 import numpy as np
-from typing import Tuple
+from typing import List, Tuple
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Sequential, load_model
 
 from src.agent import Agent
+from src.experience import Experience
 
 
 class Player(Agent):
@@ -86,32 +87,41 @@ class Player(Agent):
 
         return action
 
-    def learn(self, state, action, next_state, reward, done):
-        # states = np.array([experience.state for experience in experiences])
-        # actions = np.array([experience.action for experience in experiences])
-        # rewards = np.array([experience.reward for experience in experiences])
-        # next_states = np.array([experience.next_state for experience in experiences])
-        # dones = np.array([experience.done for experience in experiences])
+    def learn(self, experiences: List[Experience]):
+        """Trains the model based on the experiences gathered.
+
+        This method takes a batch of experiences and uses them to train the model to better predict
+        the expected future rewards for each action in a given state.
+
+        Args:
+            experiences (List[Experience]): A list of Experience objects representing the agent's interactions
+                                             with the environment, including states, actions, rewards, next states,
+                                             and episode termination flags.
+
+        """
+        states = np.array([experience.state for experience in experiences])
+        actions = np.array([experience.action for experience in experiences])
+        rewards = np.array([experience.reward for experience in experiences])
+        next_states = np.array([experience.next_state for experience in experiences])
+        dones = np.array([experience.done for experience in experiences])
 
         # Predict the Q-values (action values) for the given state batch
-        current_q_values = self.model.predict(state[None, ...], verbose=0)
+        current_q_values = self.model.predict(states, verbose=0)
 
         # Predict the Q-values for the next_state batch
-        next_q_values = self.model.predict(next_state[None, ...], verbose=0)
+        next_q_values = self.model.predict(next_states, verbose=0)
 
         # Initialize the target Q-values as the current Q-values
-        target_q_values = current_q_values.copy()[0]
+        target_q_values = current_q_values.copy()
 
-        if done:
-            # If the episode is done, there is no next Q-value
-            # [i, actions[i]] is the numpy equivalent of [i][actions[i]]
-            target_q_values[action] = reward
-        else:
-            # The updated Q-value is the reward plus the discounted max Q-value for the next state
-            # [i, actions[i]] is the numpy equivalent of [i][actions[i]]
-            target_q_values[action] = reward + self.gamma * np.max(next_q_values)
+        # Calculate the expected reward for each experience
+        for i in range(len(experiences)):
+            if dones[i]:
+                target_q_values[i, actions[i]] = rewards[i]
+            else:
+                target_q_values[i, actions[i]] = rewards[i] + self.gamma * np.max(
+                    next_q_values[i]
+                )
 
         # Train the model
-        self.model.fit(
-            state[None, ...], target_q_values[None, ...], epochs=1, verbose=1
-        )
+        self.model.fit(states, target_q_values, epochs=1, verbose=1)

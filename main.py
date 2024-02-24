@@ -1,6 +1,8 @@
 import sys
 import pygame
+
 from src.environment import Environment
+from src.experience import Experience
 
 pygame.init()
 screen_size = (800, 600)
@@ -13,8 +15,11 @@ env = Environment(screen=screen, render_on=False)
 episodes = 5000
 spawn_interval = 0.5  # seconds
 
-render_interval = 50  # Render interval every 50 episodes
+render_interval = 10  # Render interval every 50 episodes
 render_on = False
+
+batch_size = 512
+experiences = []
 
 for episode in range(episodes):
     if episode % render_interval == 0:  # Toggle rendering every 50 episodes
@@ -45,11 +50,13 @@ for episode in range(episodes):
             spawn_timer = 0
 
         action = env.player.get_action(state)
-
         reward, next_state, done = env.step(action)
 
-        if not render_on:
-            env.player.learn(state, action, next_state, reward, done)
+        experiences.append(Experience(state, action, reward, next_state, done))
+
+        if len(experiences) >= batch_size:
+            env.player.learn(experiences)
+            experiences = []
 
         state = next_state
         clock.tick(60)  # Limit frame rate to 60 FPS
