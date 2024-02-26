@@ -1,6 +1,7 @@
-import pygame
 import numpy as np
 from typing import List, Tuple
+from pygame import Surface
+from pygame.rect import Rect as Rect
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Sequential, load_model
@@ -15,7 +16,7 @@ class Player(Agent):
         start_location: Tuple[int, int],
         size: int = 10,
         epsilon=1,
-        epsilon_decay=0.998,
+        epsilon_decay=0.99989,
         epsilon_end=0.01,
         gamma=0.99,
     ) -> None:
@@ -38,6 +39,7 @@ class Player(Agent):
         self.epsilon_decay = epsilon_decay
         self.epsilon_end = epsilon_end
         self.gamma = gamma
+        self.use_optimal_strategy = False
         self.model = self.build_model()
 
     def reset(self):
@@ -49,7 +51,7 @@ class Player(Agent):
         model = Sequential(
             [
                 # Input layer expects a flattened grid, hence the input shape is grid_size squared
-                Dense(128, activation="relu", input_shape=(22,)),
+                Dense(128, activation="relu", input_shape=(24,)),
                 Dense(128, activation="relu"),
                 Dense(64, activation="relu"),
                 Dense(32, activation="relu"),
@@ -62,11 +64,15 @@ class Player(Agent):
 
         return model
 
+    def render(self, screen: Surface) -> Rect:
+        self.use_optimal_strategy = True
+        return super().render(screen)
+
     def get_action(self, state):
         # rand() returns a random value between 0 and 1
-        if np.random.rand() <= self.epsilon:
+        if np.random.rand() <= self.epsilon and not self.use_optimal_strategy:
             # Exploration: random action
-            action = np.random.randint(0, 2)
+            action = np.random.randint(0, 4)
         else:
             # Add an extra dimension to the state to create a batch with one instance
             state = np.expand_dims(state, axis=0)
@@ -99,6 +105,7 @@ class Player(Agent):
                                              and episode termination flags.
 
         """
+
         states = np.array([experience.state for experience in experiences])
         actions = np.array([experience.action for experience in experiences])
         rewards = np.array([experience.reward for experience in experiences])
@@ -124,4 +131,8 @@ class Player(Agent):
                 )
 
         # Train the model
-        self.model.fit(states, target_q_values, epochs=1, verbose=1)
+        history = self.model.fit(states, target_q_values, epochs=1, verbose=1)
+        return history.history["loss"]
+
+    def save_model(self, path):
+        self.model.save(path)
