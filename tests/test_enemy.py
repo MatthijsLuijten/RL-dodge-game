@@ -2,9 +2,9 @@ import os
 import sys
 import unittest
 import pygame
+from src.enemy import Enemy
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from src.enemy import Enemy
 
 
 class TestEnemy(unittest.TestCase):
