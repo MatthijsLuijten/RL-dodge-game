@@ -6,6 +6,7 @@ from typing import Tuple
 
 from src.enemy import Enemy
 from src.player import Player
+from src.agent import Agent
 
 
 class Environment:
@@ -113,7 +114,7 @@ class Environment:
 
         return reward, done
 
-    def check_collision(self, player: Player, enemy: Enemy) -> bool:
+    def check_collision(self, player: Agent, enemy: Agent) -> bool:
         """
         Checks if there is a collision between the player and an enemy.
 
