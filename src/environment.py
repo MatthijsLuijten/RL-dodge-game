@@ -1,9 +1,12 @@
 import pygame
+import random
 import numpy as np
 from pygame.surface import Surface
 from typing import Tuple
 
+from src.enemy import Enemy
 from src.player import Player
+from src.agent import Agent
 
 
 class Environment:
@@ -35,6 +38,8 @@ class Environment:
             "not possible": -5,
         }
 
+        self.enemies: list[Enemy] = []
+
         self.reset()
 
     def reset(self) -> np.ndarray:
@@ -46,7 +51,7 @@ class Environment:
         """
         self.player.reset()
 
-        # TODO: reset enemies; self.enemy_generator.reset()? Dunno if needed
+        self.enemies = []
 
         if self.render_on:
             self.render()
@@ -60,7 +65,8 @@ class Environment:
         self.screen.fill((0, 0, 0))
         self.player.render(self.screen)
 
-        # TODO: draw enemeis; self.enemies.render()?
+        for enemy in self.enemies:
+            enemy.render(self.screen)
         pygame.display.flip()
 
     def get_state(self) -> np.ndarray:
@@ -99,10 +105,36 @@ class Environment:
             reward = self.rewards["not possible"]
             done = True
 
-        # TODO: check if the player collides with an enemy, loop over enemies?
-        # for enemy in self.enemy_generator.enemies: if enemy collides with player: done = True reward = reward = self.rewards["death"]
+        # Check if the player collides with an enemy
+        for enemy in self.enemies:
+            if self.check_collision(self.player, enemy):
+                reward = self.rewards["death"]
+                done = True
+                return reward, done
 
         return reward, done
+
+    def check_collision(self, player: Agent, enemy: Agent) -> bool:
+        """
+        Checks if there is a collision between the player and an enemy.
+
+        Args:
+            player (Player): The player object.
+            enemy (Enemy): The enemy object.
+
+        Returns:
+            bool: True if there is a collision, False otherwise.
+        """
+        player_x, player_y = player.location
+        enemy_x, enemy_y = enemy.location
+        player_radius = player.size
+        enemy_radius = enemy.size
+
+        # Calculate distance between player and enemy
+        distance = ((player_x - enemy_x) ** 2 + (player_y - enemy_y) ** 2) ** 0.5
+
+        # Collision occurs if the distance is less than the sum of their radii
+        return distance < (player_radius + enemy_radius)
 
     def is_valid_location(self, new_location: Tuple[int, int]) -> bool:
         """
@@ -141,10 +173,77 @@ class Environment:
         print("reward", reward)
         next_state = self.get_state()
 
-        # TODO: Update enemy positions
-        # self.enemies.step()?
+        for enemy in self.enemies:
+            enemy.move()
+
+            # Check if the enemy is outside the screen and remove it only if it's moving away from the screen
+            # This ensures that self.enemies is not getting infinitely large
+            if self.is_moving_outside_the_screen(enemy):
+                self.enemies.remove(enemy)
 
         if self.render_on:
             self.render()
 
         return reward, next_state, done
+
+    def is_moving_outside_the_screen(self, enemy: Enemy) -> bool:
+        """
+        Checks if the enemy is moving outside the screen based on its direction.
+
+        Args:
+            enemy (Enemy): The enemy object.
+
+        Returns:
+            bool: True if the enemy is moving outside the screen, False otherwise.
+        """
+        screen_width, screen_height = self.screen.get_size()
+        enemy_x, enemy_y = enemy.location
+        enemy_dx, enemy_dy = enemy.direction
+
+        if (
+            enemy_dx > 0 and enemy_x - enemy.size >= screen_width
+        ):  # Moving right and positioned to or beyond the right of the screen
+            return True
+        elif (
+            enemy_dx < 0 and enemy_x + enemy.size <= 0
+        ):  # Moving left and positioned to or beyond the left of the screen
+            return True
+        elif (
+            enemy_dy > 0 and enemy_y - enemy.size >= screen_height
+        ):  # Moving down and positioned to or below the bottom of the screen
+            return True
+        elif (
+            enemy_dy < 0 and enemy_y + enemy.size <= 0
+        ):  # Moving up and positioned to or above the top of the screen
+            return True
+        else:
+            return False
+
+    def spawn_enemy(self):
+        """
+        Spawns a new enemy in the environment with random size and position in the border.
+        """
+        size = random.randint(10, 50)
+
+        self.width, self.height = self.screen.get_size()
+
+        # Choose a random border position
+        border_position = random.choice(["top", "bottom", "left", "right"])
+
+        # Create enemy position tuple based on chosen border
+        if border_position == "top":
+            start_location = (random.randint(0, self.width), 0)
+            direction = (0, 1)
+        elif border_position == "bottom":
+            start_location = (random.randint(0, self.width), self.height)
+            direction = (0, -1)
+        elif border_position == "left":
+            start_location = (0, random.randint(0, self.height))
+            direction = (1, 0)
+        elif border_position == "right":
+            start_location = (self.width, random.randint(0, self.height))
+            direction = (-1, 0)
+
+        self.enemies.append(
+            Enemy(start_location=start_location, direction=direction, size=size)
+        )

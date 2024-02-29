@@ -18,3 +18,12 @@ repos:
     hooks:
       - id: mypy # Check correct python code (incl. imports, types etc.)
         files: src
+
+  - repo: local
+    hooks:
+      - id: run-tests
+        name: Run Python tests
+        entry: python
+        language: system
+        pass_filenames: false
+        files: tests/.*
