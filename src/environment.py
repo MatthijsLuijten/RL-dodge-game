@@ -10,11 +10,10 @@ from src.player import Player
 
 
 class Environment:
-    # def __init__(
-    #     self, screen: Surface, player_size: int = 10, render_on: bool = False
-    # ) -> None:
     def __init__(
-        self, screen: Tuple[int, int], player_size: int = 10, render_on: bool = False
+        self,
+        screen: Tuple[int, int] | Surface,
+        player_size: int = 10,
     ) -> None:
         """
         Initializes the environment.
@@ -22,15 +21,18 @@ class Environment:
         Args:
             screen (Surface): Pygame screen surface.
             player_size (int, optional): Size of the player. Defaults to 10.
-            render_on (bool, optional): Whether to render the environment. Defaults to False.
         """
-        self.screen = screen
-        self.render_on = render_on
+        if type(screen) is Surface:
+            self.screen = screen
+            self.screen_size = self.screen.get_size()
+        else:
+            self.screen = None
+            self.screen_size = screen
 
         self.player = Player(
             (
-                (self.screen[0] / 2),
-                (self.screen[1] / 2),
+                (self.screen_size[0] / 2),
+                (self.screen_size[1] / 2),
             ),
             player_size,
         )
@@ -56,9 +58,6 @@ class Environment:
 
         self.enemies = []
 
-        if self.render_on:
-            self.render()
-
         return self.get_state()
 
     def render(self) -> None:
@@ -83,7 +82,7 @@ class Environment:
         # Initialize a list to store distances between player and enemies
         distances = []
 
-        screen_width, screen_height = self.screen
+        screen_width, screen_height = self.screen_size
 
         # Calculate distances between player and enemies
         for enemy in self.enemies:
@@ -106,8 +105,8 @@ class Environment:
 
         # Take the locations of the closest enemies, up to 10 or all if less than 10
         closest_enemy_locations: List[int] = []
-        for enemy, _ in sorted_enemies[:10]:
-            closest_enemy_locations.extend(enemy)
+        for enemy_distance, _ in sorted_enemies[:10]:
+            closest_enemy_locations.extend(enemy_distance)
 
         # Fill remaining slots with -1 if there are fewer than 10 enemies
         num_missing_enemies = 10 - len(sorted_enemies)
@@ -190,7 +189,7 @@ class Environment:
         Returns:
             bool: True if the location is valid, False otherwise.
         """
-        screen_width, screen_height = self.screen
+        screen_width, screen_height = self.screen_size
         player_radius = self.player.size
 
         x_min = player_radius
@@ -214,7 +213,7 @@ class Environment:
             Tuple[int, np.ndarray, bool]: Reward obtained, next state, and whether the episode is done.
         """
         reward, done = self.move_player(action)
-        # print("reward", reward)
+
         next_state = self.get_state()
 
         for enemy in self.enemies:
@@ -224,9 +223,6 @@ class Environment:
             # This ensures that self.enemies is not getting infinitely large
             if self.is_moving_outside_the_screen(enemy):
                 self.enemies.remove(enemy)
-
-        if self.render_on:
-            self.render()
 
         return reward, next_state, done
 
@@ -240,7 +236,7 @@ class Environment:
         Returns:
             bool: True if the enemy is moving outside the screen, False otherwise.
         """
-        screen_width, screen_height = self.screen
+        screen_width, screen_height = self.screen_size
         enemy_x, enemy_y = enemy.location
         enemy_dx, enemy_dy = enemy.direction
 
@@ -269,7 +265,7 @@ class Environment:
         """
         size = random.randint(10, 50)
 
-        self.width, self.height = self.screen
+        self.width, self.height = self.screen_size
 
         # Choose a random border position
         border_position = random.choice(["top", "bottom", "left", "right"])

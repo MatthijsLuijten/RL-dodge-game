@@ -64,10 +64,6 @@ class Player(Agent):
 
         return model
 
-    def render(self, screen: Surface) -> Rect:
-        self.use_optimal_strategy = True
-        return super().render(screen)
-
     def get_action(self, state):
         # rand() returns a random value between 0 and 1
         if np.random.rand() <= self.epsilon and not self.use_optimal_strategy:
@@ -79,13 +75,11 @@ class Player(Agent):
 
             # Use the model to predict the Q-values (action values) for the given state
             q_values = self.model.predict(state, verbose=0)
-            # print('Q-values:', q_values)
 
             # Select and return the action with the highest Q-value
             action = np.argmax(
                 q_values[0]
             )  # Take the action from the first (and only) entry
-            # print('action:', action)
 
         # Decay the epsilon value to reduce the exploration over time
         if self.epsilon > self.epsilon_end:
