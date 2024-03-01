@@ -21,6 +21,7 @@ class Enemy(Agent):
         super().__init__(start_location, size, color)
         self.direction = direction
         self.location = start_location
+        self.size = size
 
     def move(self):
         """Moves the enemy in the specified direction."""
