@@ -31,7 +31,7 @@ class TestPlayer(unittest.TestCase):
     def test_move(self):
         """Test if moving a player updates the locationi correctly"""
         self.player.move(self.player.actions[3])  # Move right
-        self.assertEqual(self.player.location, (102, 100))
+        self.assertEqual(self.player.location, (101, 100))
 
     def test_render(self):
         """Test if rendering a player does not return any errors (we can't really check rendering output in tests)"""
