@@ -1,3 +1,4 @@
+import random
 import numpy as np
 from typing import List, Tuple
 from pygame import Surface
@@ -99,7 +100,7 @@ class Player(Agent):
                                              and episode termination flags.
 
         """
-
+        random.shuffle(experiences)
         states = np.array([experience.state for experience in experiences])
         actions = np.array([experience.action for experience in experiences])
         rewards = np.array([experience.reward for experience in experiences])

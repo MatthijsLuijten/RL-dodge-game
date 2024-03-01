@@ -10,7 +10,7 @@ render_on = True
 render_interval = 10
 screen = (800, 600)
 episodes = 5000
-batch_size = 512
+experience_memory = 10000
 if not os.path.exists("experiment_results"):
     os.mkdir("experiment_results")
 
@@ -60,7 +60,7 @@ for episode in range(episodes):
 
         experiences.append(Experience(state, action, reward, next_state, done))
 
-        if len(experiences) >= batch_size:
+        if len(experiences) >= experience_memory:
             loss = env.player.learn(experiences)
             losses.append(loss)
             experiences = []
