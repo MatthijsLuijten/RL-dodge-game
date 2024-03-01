@@ -1,3 +1,4 @@
+import math
 import pygame
 import random
 import numpy as np
@@ -9,8 +10,11 @@ from src.player import Player
 
 
 class Environment:
+    # def __init__(
+    #     self, screen: Surface, player_size: int = 10, render_on: bool = False
+    # ) -> None:
     def __init__(
-        self, screen: Surface, player_size: int = 10, render_on: bool = False
+        self, screen: Tuple[int, int], player_size: int = 10, render_on: bool = False
     ) -> None:
         """
         Initializes the environment.
@@ -25,16 +29,16 @@ class Environment:
 
         self.player = Player(
             (
-                (self.screen.get_size()[0] / 2),
-                (self.screen.get_size()[1] / 2),
+                (self.screen[0] / 2),
+                (self.screen[1] / 2),
             ),
             player_size,
         )
 
         self.rewards = {
             "alive": 1,
-            "death": -100,
-            "not possible": -5,
+            "death": -50,
+            "not possible": -50,
         }
 
         self.enemies: list[Enemy] = []
@@ -79,12 +83,23 @@ class Environment:
         # Initialize a list to store distances between player and enemies
         distances = []
 
+        screen_width, screen_height = self.screen
+
         # Calculate distances between player and enemies
         for enemy in self.enemies:
             enemy_pos = np.array(enemy.location)
             player_pos = np.array(self.player.location)
-            distance = np.linalg.norm(enemy_pos - player_pos)  # Euclidean distance
-            distances.append((enemy, distance))
+            distance_centers = np.linalg.norm(enemy_pos - player_pos)
+            distance_borders = distance_centers - self.player.size - enemy.size
+
+            dy_centers = enemy.location[1] - self.player.location[1]
+            dy_borders = dy_centers * distance_borders / distance_centers
+
+            dx_centers = enemy.location[0] - self.player.location[0]
+            dx_borders = dx_centers * distance_borders / distance_centers
+            distances.append(
+                ([math.floor(dy_borders), math.floor(dx_borders)], distance_borders)
+            )
 
         # Sort the enemies based on their distances from the player
         sorted_enemies = sorted(distances, key=lambda x: x[1])
@@ -92,15 +107,21 @@ class Environment:
         # Take the locations of the closest enemies, up to 10 or all if less than 10
         closest_enemy_locations: List[int] = []
         for enemy, _ in sorted_enemies[:10]:
-            closest_enemy_locations.extend(enemy.location)
+            closest_enemy_locations.extend(enemy)
 
         # Fill remaining slots with -1 if there are fewer than 10 enemies
         num_missing_enemies = 10 - len(sorted_enemies)
-        closest_enemy_locations += [-1] * (2 * num_missing_enemies)
+        closest_enemy_locations += [screen_height, screen_width] * num_missing_enemies
+
+        player_to_top = self.player.location[1] - self.player.size
+        player_to_bottom = screen_height - self.player.location[1] - self.player.size
+        player_to_left = self.player.location[0] - self.player.size
+        player_to_right = screen_width - self.player.location[0] - self.player.size
 
         # Combine player location with locations of the closest enemies
         state = np.array(
-            [self.player.location[0], self.player.location[1]] + closest_enemy_locations
+            [player_to_top, player_to_bottom, player_to_left, player_to_right]
+            + closest_enemy_locations
         )
 
         return state
@@ -169,8 +190,8 @@ class Environment:
         Returns:
             bool: True if the location is valid, False otherwise.
         """
-        screen_width, screen_height = self.screen.get_size()
-        player_radius = self.player.size / 2
+        screen_width, screen_height = self.screen
+        player_radius = self.player.size
 
         x_min = player_radius
         x_max = screen_width - player_radius
@@ -219,7 +240,7 @@ class Environment:
         Returns:
             bool: True if the enemy is moving outside the screen, False otherwise.
         """
-        screen_width, screen_height = self.screen.get_size()
+        screen_width, screen_height = self.screen
         enemy_x, enemy_y = enemy.location
         enemy_dx, enemy_dy = enemy.direction
 
@@ -248,7 +269,7 @@ class Environment:
         """
         size = random.randint(10, 50)
 
-        self.width, self.height = self.screen.get_size()
+        self.width, self.height = self.screen
 
         # Choose a random border position
         border_position = random.choice(["top", "bottom", "left", "right"])
